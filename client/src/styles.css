@@ -1,0 +1,264 @@
+:root {
+  color-scheme: light;
+  --ink: #1c1c1f;
+  --muted: #64646c;
+  --line: #e7e7ea;
+  --card: #ffffff;
+  --bar: #3a3a40;
+  --track: #f1f1f3;
+  --warning: #6f4b16;
+  --warningBg: #f8f3ea;
+  --simulatedBg: #1c1c1f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  background: #ffffff;
+}
+
+body {
+  color: var(--ink);
+  font-family: Inter, "Segoe UI", sans-serif;
+  overflow-x: hidden;
+}
+
+.widget {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 28px 28px 20px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 10px 28px rgba(20, 20, 24, 0.05);
+}
+
+.widgetCompact {
+  padding: 16px 16px 12px;
+  border-radius: 14px;
+}
+
+.widgetHeader {
+  margin-bottom: 16px;
+}
+
+.eyebrow,
+.electionDate,
+.contestMeta,
+.sourceLine,
+.timeBlock,
+.reportingStatus,
+.topTwoNote,
+.refreshing {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  letter-spacing: 0.01em;
+}
+
+.eyebrow {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.electionTitle {
+  margin: 6px 0 0;
+  font-size: 1.7rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.widgetCompact .electionTitle {
+  font-size: 1.28rem;
+}
+
+.electionDate,
+.contestMeta,
+.reportingStatus {
+  margin-top: 6px;
+}
+
+.reportingStatus {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.statusStack {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.statusStack:empty {
+  display: none;
+}
+
+.banner,
+.awaiting,
+.refreshing {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.awaiting {
+  background: var(--track);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.refreshing {
+  padding: 0;
+  color: var(--muted);
+}
+
+.bannerSimulated {
+  margin-bottom: 14px;
+  background: var(--simulatedBg);
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.bannerWarning,
+.bannerPending {
+  background: var(--warningBg);
+  color: var(--warning);
+}
+
+.candidateList {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.widgetCompact .candidateList {
+  gap: 10px;
+}
+
+.candidate {
+  min-width: 0;
+}
+
+.candidateTopTwo {
+  padding-left: 10px;
+  border-left: 2px solid #8a8175;
+}
+
+.candidateHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.candidateCopy {
+  min-width: 0;
+}
+
+.candidateName,
+.topTwoLabel,
+.candidateVotes {
+  margin: 0;
+}
+
+.candidateName {
+  font-size: 1rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.topTwoLabel {
+  margin-top: 2px;
+  color: #5f584f;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.topTwoNote {
+  margin-top: 10px;
+}
+
+.candidateVotes {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.98rem;
+  white-space: nowrap;
+}
+
+.candidateShare {
+  margin-left: 8px;
+  color: var(--muted);
+}
+
+.barTrack {
+  height: 6px;
+  margin-top: 8px;
+  overflow: hidden;
+  background: var(--track);
+  border-radius: 999px;
+}
+
+.barFill {
+  height: 100%;
+  background: var(--bar);
+  border-radius: inherit;
+}
+
+.widgetFooter {
+  display: grid;
+  gap: 4px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.timeBlock {
+  display: grid;
+  gap: 2px;
+}
+
+.timeBlock p {
+  margin: 0;
+}
+
+.sourceLink {
+  color: var(--ink);
+  font-size: 0.86rem;
+  font-weight: 600;
+  text-underline-offset: 3px;
+}
+
+.sourceLink:focus-visible,
+.candidate:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+@media (max-width: 380px) {
+  .widget {
+    padding: 16px 14px 12px;
+  }
+
+  .candidateHeader {
+    align-items: flex-start;
+  }
+
+  .electionTitle {
+    font-size: 1.3rem;
+  }
+}

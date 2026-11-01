@@ -1,0 +1,39 @@
+name: Sync election results
+
+on:
+  repository_dispatch:
+    types: [ivgid-results-updated]
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ivgid-results-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out abonini/RB4IVGID
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sync official results
+        env:
+          RESULTS_API_BASE: ${{ vars.RESULTS_API_BASE }}
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+          HINT_URL: ${{ github.event.client_payload.observedUrl }}
+        run: npm run sync

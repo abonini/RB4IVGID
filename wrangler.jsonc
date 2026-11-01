@@ -1,0 +1,44 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ivgid-results",
+  "main": "worker/src/index.ts",
+  "compatibility_date": "2026-10-30",
+  "workers_dev": true,
+  "assets": {
+    "directory": "./dist/client",
+    "binding": "ASSETS",
+    "html_handling": "none",
+    "not_found_handling": "none",
+    "run_worker_first": ["/api/*", "/ivgid-results", "/"]
+  },
+  "kv_namespaces": [
+    {
+      "binding": "IVGID_RESULTS",
+      "id": "a6c4351d7783404e80c60ccbf8805dc7"
+    }
+  ],
+  "triggers": {
+    "crons": ["* * * * *"]
+  },
+  "vars": {
+    "GITHUB_REPOSITORY": "abonini/RB4IVGID",
+    "REFRESH_INTERVAL_SECONDS": "60",
+    "INGEST_MODE": "actions",
+    "SIMULATED": "false"
+  },
+  "env": {
+    "preview": {
+      "name": "ivgid-results-preview",
+      "kv_namespaces": [],
+      "triggers": {
+        "crons": []
+      },
+      "vars": {
+        "GITHUB_REPOSITORY": "abonini/RB4IVGID",
+        "REFRESH_INTERVAL_SECONDS": "60",
+        "INGEST_MODE": "preview",
+        "SIMULATED": "true"
+      }
+    }
+  }
+}

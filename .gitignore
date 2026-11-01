@@ -1,0 +1,8 @@
+node_modules/
+dist/
+data/current.json
+data/history/
+*.log
+.DS_Store
+.dev.vars
+.wrangler/

@@ -1,0 +1,29 @@
+{
+  "discoveryPageUrl": "https://www.washoecounty.gov/voters/results/2026data.php",
+  "officialResultsUrl": "https://electionresults.washoecounty.gov/",
+  "contestPattern": "INCLINE VILLAGE GENERAL IMPROVEMENT DISTRICT",
+  "electionYear": 2026,
+  "electionDate": "2026-11-03",
+  "office": "Incline Village General Improvement District Trustee",
+  "term": "Four years",
+  "seats": 2,
+  "voteFor": 2,
+  "displayOrder": [],
+  "candidates": [
+    {
+      "id": "brooks",
+      "displayName": "Ryan \"RB\" Brooks",
+      "match": ["brooks"]
+    },
+    {
+      "id": "noble",
+      "displayName": "David S. Noble",
+      "match": ["noble"]
+    },
+    {
+      "id": "swenson",
+      "displayName": "Harry Swenson",
+      "match": ["swenson"]
+    }
+  ]
+}

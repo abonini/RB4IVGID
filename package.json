@@ -1,0 +1,41 @@
+{
+  "name": "ivgid-results-widget",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Embeddable 2026 IVGID Trustee election results widget.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "concurrently -k \"npm run dev:worker\" \"npm run dev:client\"",
+    "dev:worker": "mkdir -p dist/client && wrangler dev",
+    "dev:client": "vite",
+    "build": "vite build",
+    "deploy": "npm run build && wrangler deploy",
+    "preview": "mkdir -p dist/client && wrangler dev --env preview",
+    "sync": "tsx cli/syncElectionResults.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.worker.json --noEmit",
+    "test": "tsx --test shared/*.test.ts server/src/*.test.ts server/src/http/*.test.ts server/src/sources/*.test.ts worker/src/*.test.ts cli/*.test.ts"
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "express": "^5.1.0",
+    "pdfjs-dist": "4.10.38",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "@fontsource/inter": "^5.2.8"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.9.1",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "@cloudflare/workers-types": "^5.20261101.1",
+    "@vitejs/plugin-react": "^5.1.0",
+    "concurrently": "^9.2.1",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.12",
+    "wrangler": "^4.45.0"
+  }
+}
