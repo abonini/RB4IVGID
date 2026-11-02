@@ -1,14 +1,7 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { selectTopTwo } from "../../shared/ranking";
 import type { CandidateResult, ResultsResponse } from "../../shared/types";
-import {
-  type CountdownParts,
-  countdownParts,
-  hasLiveTotals,
-  headerLabel,
-  padUnit,
-  showResultsOverlay,
-} from "./electionNight";
+import { hasLiveTotals, headerLabel } from "./electionNight";
 import { formatPacific, formatShare, formatVotes } from "./format";
 
 const POLL_MS = 30_000;
@@ -26,8 +19,6 @@ interface WidgetProps {
 export function Widget({ layout }: WidgetProps) {
   const [results, setResults] = useState<ResultsResponse | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [nowMs, setNowMs] = useState(() => Date.now());
-  const overlayVisible = showResultsOverlay(results) && (results !== null || Boolean(loadError));
 
   useEffect(() => {
     let timer = 0;
@@ -71,12 +62,6 @@ export function Widget({ layout }: WidgetProps) {
   }, []);
 
   useEffect(() => {
-    if (!overlayVisible) return undefined;
-    const timer = window.setInterval(() => setNowMs(Date.now()), 1000);
-    return () => window.clearInterval(timer);
-  }, [overlayVisible]);
-
-  useEffect(() => {
     const root = document.getElementById("root");
     if (!root) return undefined;
     const sendHeight = () => {
@@ -87,7 +72,7 @@ export function Widget({ layout }: WidgetProps) {
     const observer = new ResizeObserver(sendHeight);
     observer.observe(root);
     return () => observer.disconnect();
-  }, [results, loadError, overlayVisible, layout]);
+  }, [results, loadError, layout]);
 
   const widgetClass = layout === "compact" ? "widget widgetStacked" : "widget";
 
@@ -98,7 +83,7 @@ export function Widget({ layout }: WidgetProps) {
         <div className="nightBanner">
           <h1 className="nightBannerText">Election Night Results</h1>
         </div>
-        <p className="statusPill">{headerLabel(results, nowMs)}</p>
+        <p className="statusPill">{headerLabel(results)}</p>
       </header>
       <WarningStrip results={results} loadError={loadError} />
       <div className="nightBody">
@@ -111,11 +96,8 @@ export function Widget({ layout }: WidgetProps) {
             <span>Election</span>
           </h2>
         </aside>
-        <section className={overlayVisible ? "resultsPanel resultsPanelOverlay" : "resultsPanel"} aria-label="Candidate results">
-          <div className="resultsStage">
-            <CandidateTable results={results} dimmed={overlayVisible} />
-            {overlayVisible ? <CountdownOverlay parts={countdownParts(nowMs)} /> : null}
-          </div>
+        <section className="resultsPanel" aria-label="Candidate results">
+          <CandidateTable results={results} />
           <footer className="nightFooter">
             <p className="footerTotal">{totalLabel(results)}</p>
             <div className="footerSource">
@@ -156,13 +138,12 @@ function warningMessages(results: ResultsResponse | null, loadError: string | nu
   return messages;
 }
 
-function CandidateTable({ results, dimmed }: { results: ResultsResponse | null; dimmed: boolean }) {
+function CandidateTable({ results }: { results: ResultsResponse | null }) {
   const candidates = results && results.candidates.length > 0 ? results.candidates : FALLBACK_CANDIDATES;
   const highlighted = new Set(selectTopTwo(candidates, results?.contest.seats ?? 2).ids);
-  const tableClass = dimmed ? "resultsTable resultsDimmed" : "resultsTable";
 
   return (
-    <div className={tableClass}>
+    <div className="resultsTable">
       <div className="resultsHead">
         <p>Candidate (ballot order)</p>
         <p className="columnNumber">Votes</p>
@@ -214,44 +195,6 @@ function CandidateRow({
       <p className="voteCount">{candidate.votes == null ? "—" : formatVotes(candidate.votes)}</p>
       <p className="votePercent">{candidate.voteShare == null ? "—" : formatShare(candidate.voteShare)}</p>
     </li>
-  );
-}
-
-function CountdownOverlay({ parts }: { parts: CountdownParts }) {
-  if (parts.closed) {
-    return (
-      <div className="countdownOverlay">
-        <div className="countdownCard">
-          <p className="countdownTitle">POLLS CLOSED</p>
-          <p className="countdownLead">Awaiting Official Election Results</p>
-          <p className="countdownSupport">Results will appear here once released by Washoe County.</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="countdownOverlay">
-      <div className="countdownCard">
-        <p className="countdownTitle">Countdown to Poll Closing</p>
-        <p className="countdownSupport">Polls close November 3, 2026 · 7:00 PM PST</p>
-        <div className="countdownTiles">
-          <CountdownTile value={parts.days} label="Days" />
-          <CountdownTile value={parts.hours} label="Hours" />
-          <CountdownTile value={parts.minutes} label="Minutes" />
-          <CountdownTile value={parts.seconds} label="Seconds" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function CountdownTile({ value, label }: { value: number; label: string }) {
-  return (
-    <div className="countdownTile">
-      <p className="countdownValue">{padUnit(value)}</p>
-      <p className="countdownLabel">{label}</p>
-    </div>
   );
 }
 
