@@ -17,12 +17,7 @@ export interface Env {
 }
 
 const BODY_LIMIT = 32 * 1024;
-const FRAME_ANCESTORS = [
-  "https://brooksrb.com",
-  "https://www.brooksrb.com",
-  "https://*.wix.com",
-  "https://*.wixsite.com",
-].join(" ");
+const FRAME_ANCESTORS = "https:";
 
 let lastRunMs = 0;
 

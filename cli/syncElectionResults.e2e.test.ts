@@ -72,6 +72,31 @@ test("discovers, publishes, skips duplicates, and recovers from a rejected workb
   await api.close();
 });
 
+test("waits quietly before the general-election workbook is posted", async () => {
+  const kv = memoryKv();
+  const api = await listen((request, response) => handleApi(request, response, kv));
+  const preElection = `<h3>Primary Election</h3>
+<a href="https://www.washoecounty.gov/voters/results/datafiles/primary.xlsx">Download Unofficial Statement of Votes Cast</a>`;
+  const fetchImpl: typeof fetch = async (input, init) => {
+    const url = requestUrl(input);
+    if (url === pageUrl) return new Response(preElection);
+    if (url.startsWith("https://www.washoecounty.gov/")) return new Response("missing", { status: 404 });
+    return fetch(input, init);
+  };
+  const result = await syncElectionResults({
+    apiBase: api.url,
+    adminToken: "test-token",
+    discoveryPageUrl: pageUrl,
+    fetchImpl,
+    retryDelays: [0],
+    sleep: async () => undefined,
+  });
+  assert.equal(result.outcome, "waiting");
+  assert.equal(await readCurrent(kv), null);
+  assert.equal(kv.writes(), 0);
+  await api.close();
+});
+
 async function health(kv: ResultsKv) {
   return buildHealth(await readCurrent(kv), await readMonitor(kv), await readIngestion(kv), "actions");
 }

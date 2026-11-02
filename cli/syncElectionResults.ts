@@ -37,7 +37,7 @@ interface Probe {
 }
 
 export interface SyncResult {
-  outcome: "published" | "unchanged" | "failed";
+  outcome: "published" | "unchanged" | "failed" | "waiting";
 }
 
 export async function syncElectionResults(options: SyncOptions): Promise<SyncResult> {
@@ -62,6 +62,10 @@ async function syncOnce(options: SyncOptions): Promise<SyncResult> {
   const fetchImpl = options.fetchImpl ?? fetch;
   const pageUrl = options.discoveryPageUrl ?? config.discoveryPageUrl;
   const discovered = await discoverWorkbook(pageUrl, fetchImpl);
+  if (!discovered) {
+    console.log("General-election workbook is not posted yet; nothing to sync");
+    return { outcome: "waiting" };
+  }
   if (options.hintUrl && options.hintUrl !== discovered.url) {
     console.error("Dispatch hint did not match the discovered Washoe workbook");
   }
@@ -116,9 +120,7 @@ async function discoverWorkbook(pageUrl: string, fetchImpl: typeof fetch) {
     throw new Error(`County reports page returned ${response.status}`);
   }
   const html = new TextDecoder().decode(await readLimitedBody(response, 2 * 1024 * 1024));
-  const discovered = discoverSovcUrl(html, pageUrl);
-  if (!discovered) throw new Error("General-election workbook link was not found");
-  return discovered;
+  return discoverSovcUrl(html, pageUrl);
 }
 
 async function probeWorkbook(url: string, health: HealthBody, fetchImpl: typeof fetch): Promise<Probe> {

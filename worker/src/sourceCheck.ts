@@ -10,7 +10,7 @@ import {
 import { readCurrent, readIngestion, readMonitor, writeJson } from "./store";
 import { isPending } from "./publicState";
 
-const RETRY_MS = 10 * 60 * 1000;
+const RETRY_MS = 3 * 60 * 1000;
 const DISPATCH_URL = "https://api.github.com/repos/abonini/RB4IVGID/dispatches";
 const HTML_LIMIT = 2 * 1024 * 1024;
 

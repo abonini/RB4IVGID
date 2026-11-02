@@ -61,7 +61,7 @@ npm run preview
 
 Every minute the Worker reads the general-election section of the Washoe reports page and looks for a Statement of Votes Cast link. It does not guess filenames. A new URL, ETag, or Last-Modified value is a new revision even when the filename stays the same. Content-Length is not treated as proof that the file is unchanged.
 
-The Worker dispatches `https://api.github.com/repos/abonini/RB4IVGID/dispatches` once for that revision. It does not dispatch again every minute. A failed or unacknowledged dispatch retries after 10 minutes. GitHub Actions discovers the workbook itself, hashes the bytes, parses them with ExcelJS, and posts to `/api/admin/import`.
+The Worker dispatches `https://api.github.com/repos/abonini/RB4IVGID/dispatches` once for that revision. It does not dispatch again every minute. A failed or unacknowledged dispatch retries after 3 minutes. GitHub Actions discovers the workbook itself, hashes the bytes, parses them with ExcelJS, and posts to `/api/admin/import`.
 
 If Actions fails, the county site is down, or the workbook layout changes, the last verified totals stay in KV. The widget shows that the new file could not be read. The next successful publish clears the pending state and the error.
 
@@ -87,7 +87,7 @@ Paste this into an HTML embed on brooksrb.com. No Velo and no Wix API keys.
 ></iframe>
 ```
 
-Use height `460` for a narrow phone layout if the card feels tall. The page does not scroll inside the frame at those heights. The parent frame policy allows `brooksrb.com`, `www.brooksrb.com`, `*.wix.com`, and `*.wixsite.com`.
+Use height `460` for a narrow phone layout if the card feels tall. The page does not scroll inside the frame at those heights. Any HTTPS page may frame the widget, including a Wix test site and the `filesusr.com` page Wix wraps around an HTML embed. In the Wix editor, set the embed box height to about 560. The editor canvas often stays gray until you open Preview or publish.
 
 ## Verification checklist
 

@@ -11,7 +11,7 @@ const html = `<h3>Primary Election</h3>
 <h3>General Election</h3>
 <a href="${workbook}">Download Unofficial Statement of Votes Cast</a>`;
 
-test("dispatches once per revision and retries after ten minutes", async () => {
+test("dispatches once per revision and retries after three minutes", async () => {
   const kv = memoryKv();
   let etag = '"one"';
   let dispatches = 0;
@@ -45,7 +45,10 @@ test("dispatches once per revision and retries after ten minutes", async () => {
   await checkSource(env, fetchImpl, start + 120_000);
   assert.equal(dispatches, 2);
 
-  await checkSource(env, fetchImpl, start + 120_000 + 10 * 60_000);
+  await checkSource(env, fetchImpl, start + 120_000 + 2 * 60_000);
+  assert.equal(dispatches, 2);
+
+  await checkSource(env, fetchImpl, start + 120_000 + 3 * 60_000);
   assert.equal(dispatches, 3);
 });
 

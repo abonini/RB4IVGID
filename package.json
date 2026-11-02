@@ -15,7 +15,7 @@
     "preview": "mkdir -p dist/client && wrangler dev --env preview",
     "sync": "tsx cli/syncElectionResults.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.worker.json --noEmit",
-    "test": "tsx --test shared/*.test.ts server/src/*.test.ts server/src/http/*.test.ts server/src/sources/*.test.ts worker/src/*.test.ts cli/*.test.ts"
+    "test": "tsx --test shared/*.test.ts server/src/*.test.ts server/src/http/*.test.ts server/src/sources/*.test.ts worker/src/*.test.ts cli/*.test.ts client/src/*.test.ts"
   },
   "dependencies": {
     "exceljs": "^4.4.0",
