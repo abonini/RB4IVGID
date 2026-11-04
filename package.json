@@ -18,19 +18,20 @@
     "test": "tsx --test shared/*.test.ts server/src/*.test.ts server/src/http/*.test.ts server/src/sources/*.test.ts worker/src/*.test.ts cli/*.test.ts client/src/*.test.ts"
   },
   "dependencies": {
+    "@fontsource/inter": "^5.2.8",
     "exceljs": "^4.4.0",
     "express": "^5.1.0",
     "pdfjs-dist": "4.10.38",
+    "playwright": "^1.56.1",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "@fontsource/inter": "^5.2.8"
+    "react-dom": "^19.2.0"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261101.1",
     "@types/express": "^5.0.3",
     "@types/node": "^24.9.1",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
-    "@cloudflare/workers-types": "^5.20261101.1",
     "@vitejs/plugin-react": "^5.1.0",
     "concurrently": "^9.2.1",
     "tsx": "^4.20.6",

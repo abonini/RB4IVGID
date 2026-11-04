@@ -3,8 +3,10 @@ import config from "../election.config.json";
 import { fetchOfficial, readLimitedBody } from "../shared/officialFetch";
 import { normalizedTotals } from "../shared/totals";
 import { discoverSovcUrl } from "../server/src/sources/discoverSovc";
+import { type LiveDashboardResult } from "../server/src/sources/liveDashboard";
 import { parseSovcWorkbook } from "../server/src/sources/sovcWorkbook";
 import { SourceError } from "../server/src/errors";
+import { fetchLiveDashboardResults } from "./fetchLiveDashboard";
 
 const WORKBOOK_LIMIT = 20 * 1024 * 1024;
 const DEFAULT_DELAYS = [0, 2_000, 8_000];
@@ -17,6 +19,7 @@ interface SyncOptions {
   fetchImpl?: typeof fetch;
   retryDelays?: number[];
   sleep?: (ms: number) => Promise<void>;
+  fetchLiveResults?: () => Promise<LiveDashboardResult | null>;
 }
 
 interface HealthBody {
@@ -62,13 +65,21 @@ async function syncOnce(options: SyncOptions): Promise<SyncResult> {
   const fetchImpl = options.fetchImpl ?? fetch;
   const pageUrl = options.discoveryPageUrl ?? config.discoveryPageUrl;
   const discovered = await discoverWorkbook(pageUrl, fetchImpl);
-  if (!discovered) {
-    console.log("General-election workbook is not posted yet; nothing to sync");
-    return { outcome: "waiting" };
+  if (discovered) {
+    if (options.hintUrl && options.hintUrl !== discovered.url) {
+      console.error("Dispatch hint did not match the discovered Washoe workbook");
+    }
+    return syncWorkbook(options, fetchImpl, discovered);
   }
-  if (options.hintUrl && options.hintUrl !== discovered.url) {
-    console.error("Dispatch hint did not match the discovered Washoe workbook");
-  }
+  console.log("General-election workbook is not posted yet; trying live dashboard");
+  return syncLiveDashboard(options, fetchImpl);
+}
+
+async function syncWorkbook(
+  options: SyncOptions,
+  fetchImpl: typeof fetch,
+  discovered: { url: string; label: string },
+): Promise<SyncResult> {
   const health = await readHealth(options, fetchImpl);
   const probe = await probeWorkbook(discovered.url, health, fetchImpl);
   if (!probe.body) return acknowledgeIfNeeded(options, fetchImpl, health, discovered.url, probe, health.contentHash ?? "");
@@ -111,6 +122,68 @@ async function syncOnce(options: SyncOptions): Promise<SyncResult> {
     sourceLabel: discovered.label,
   });
   return { outcome: "published" };
+}
+
+async function syncLiveDashboard(options: SyncOptions, fetchImpl: typeof fetch): Promise<SyncResult> {
+  const fetchLive = options.fetchLiveResults ?? defaultFetchLiveResults;
+  let live: LiveDashboardResult | null;
+  try {
+    live = await fetchLive();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Live dashboard scrape failed";
+    console.error("Live dashboard scrape failed", message);
+    return { outcome: "waiting" };
+  }
+  if (!live) {
+    console.log("Live dashboard did not return IVGID totals yet");
+    return { outcome: "waiting" };
+  }
+
+  const health = await readHealth(options, fetchImpl);
+  if (health.contentHash === live.contentHash) {
+    return acknowledgeIfNeeded(
+      options,
+      fetchImpl,
+      health,
+      live.sourceUrl,
+      { etag: null, lastModified: null, body: null },
+      live.contentHash,
+    );
+  }
+  const normalized = normalizedTotals(live.candidates, live.status);
+  if (health.normalizedTotals === normalized && health.contentHash) {
+    return acknowledgeIfNeeded(
+      options,
+      fetchImpl,
+      health,
+      live.sourceUrl,
+      { etag: null, lastModified: null, body: null },
+      live.contentHash,
+    );
+  }
+
+  await postImport(options, fetchImpl, {
+    outcome: "published",
+    sourceUrl: live.sourceUrl,
+    contentHash: live.contentHash,
+    etag: null,
+    lastModified: null,
+    status: live.status,
+    certified: live.certified,
+    publishedAt: live.publishedAt,
+    replacesHash: health.replacesHash ?? null,
+    contestTitle: live.contestTitle,
+    electionYear: config.electionYear,
+    candidates: live.candidates,
+    contestTotal: live.contestTotal,
+    sourceLabel: live.sourceLabel,
+  });
+  console.log("Published live dashboard totals", normalized);
+  return { outcome: "published" };
+}
+
+async function defaultFetchLiveResults(): Promise<LiveDashboardResult | null> {
+  return fetchLiveDashboardResults();
 }
 
 async function discoverWorkbook(pageUrl: string, fetchImpl: typeof fetch) {

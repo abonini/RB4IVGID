@@ -88,12 +88,68 @@ test("waits quietly before the general-election workbook is posted", async () =>
     adminToken: "test-token",
     discoveryPageUrl: pageUrl,
     fetchImpl,
+    fetchLiveResults: async () => null,
     retryDelays: [0],
     sleep: async () => undefined,
   });
   assert.equal(result.outcome, "waiting");
   assert.equal(await readCurrent(kv), null);
   assert.equal(kv.writes(), 0);
+  await api.close();
+});
+
+test("publishes live dashboard totals until the SOVC workbook appears", async () => {
+  const kv = memoryKv();
+  const api = await listen((request, response) => handleApi(request, response, kv));
+  const preElection = `<h3>Primary Election</h3>
+<a href="https://www.washoecounty.gov/voters/results/datafiles/primary.xlsx">Download Unofficial Statement of Votes Cast</a>
+<h3>General Election</h3>
+<p>Download Unofficial Statement of Votes Cast</p>`;
+  const fetchImpl: typeof fetch = async (input, init) => {
+    const url = requestUrl(input);
+    if (url === pageUrl) return new Response(preElection);
+    if (url.startsWith("https://www.washoecounty.gov/")) return new Response("missing", { status: 404 });
+    return fetch(input, init);
+  };
+  const live = {
+    sourceUrl: "https://electionresults.washoecounty.gov/",
+    sourceLabel: "Washoe County live election results",
+    status: "unofficial" as const,
+    certified: false,
+    publishedAt: "2026-11-03T21:20:00.000Z",
+    candidates: [
+      { id: "brooks", votes: 10 },
+      { id: "noble", votes: 8 },
+      { id: "swenson", votes: 6 },
+    ],
+    contestTotal: 24,
+    contentHash: "a".repeat(64),
+    contestTitle: "INCLINE VILLAGE GENERAL IMPROVEMENT DISTRICT 2026",
+  };
+  const published = await syncElectionResults({
+    apiBase: api.url,
+    adminToken: "test-token",
+    discoveryPageUrl: pageUrl,
+    fetchImpl,
+    fetchLiveResults: async () => live,
+    retryDelays: [0],
+    sleep: async () => undefined,
+  });
+  assert.equal(published.outcome, "published");
+  const current = await readCurrent(kv);
+  assert.equal(current?.sourceUrl, live.sourceUrl);
+  assert.deepEqual(current?.candidates.map((candidate) => candidate.votes), [10, 8, 6]);
+
+  const unchanged = await syncElectionResults({
+    apiBase: api.url,
+    adminToken: "test-token",
+    discoveryPageUrl: pageUrl,
+    fetchImpl,
+    fetchLiveResults: async () => live,
+    retryDelays: [0],
+    sleep: async () => undefined,
+  });
+  assert.equal(unchanged.outcome, "unchanged");
   await api.close();
 });
 

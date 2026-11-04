@@ -1,4 +1,5 @@
 import { discoverSovcUrl } from "../../server/src/sources/discoverSovc";
+import { LIVE_RESULTS_URL } from "../../shared/liveResults";
 import { fetchOfficial, readLimitedBody } from "../../shared/officialFetch";
 import config from "../../election.config.json";
 import {
@@ -11,6 +12,7 @@ import { readCurrent, readIngestion, readMonitor, writeJson } from "./store";
 import { isPending } from "./publicState";
 
 const RETRY_MS = 3 * 60 * 1000;
+const LIVE_REVISION_KEY = "live:electionresults.washoecounty.gov";
 const DISPATCH_URL = "https://api.github.com/repos/abonini/RB4IVGID/dispatches";
 const HTML_LIMIT = 2 * 1024 * 1024;
 
@@ -51,17 +53,7 @@ async function inspectCounty(
   const html = new TextDecoder().decode(await readLimitedBody(page, HTML_LIMIT));
   const discovered = discoverSovcUrl(html, config.discoveryPageUrl);
   if (!discovered) {
-    await writeIfChanged(env.IVGID_RESULTS, monitor, {
-      ...monitor,
-      failure: null,
-      discoveredUrl: null,
-      etag: null,
-      lastModified: null,
-      revisionKey: null,
-      detectionLimited: false,
-      lastSourceCheckAt: monitor.discoveredUrl ? nowIso : monitor.lastSourceCheckAt,
-    });
-    return { dispatched: false };
+    return dispatchLiveRefresh(env, fetchImpl, monitor, nowIso, nowMs);
   }
 
   const validators = await readValidators(discovered.url, monitor, fetchImpl);
@@ -156,6 +148,39 @@ async function conditionalGet(
     etag: cleanHeader(response.headers.get("etag")),
     lastModified: cleanHeader(response.headers.get("last-modified")),
   };
+}
+
+async function dispatchLiveRefresh(
+  env: CheckEnv,
+  fetchImpl: typeof fetch,
+  monitor: MonitorRecord,
+  nowIso: string,
+  nowMs: number,
+): Promise<CheckResult> {
+  if (
+    monitor.revisionKey === LIVE_REVISION_KEY
+    && monitor.lastDispatchAt
+    && nowMs - Date.parse(monitor.lastDispatchAt) < RETRY_MS
+  ) {
+    return { dispatched: false };
+  }
+
+  const dispatched = await dispatchRevision(env, fetchImpl, LIVE_RESULTS_URL, null, nowIso);
+  await writeJson(env.IVGID_RESULTS, MONITOR_KEY, {
+    ...monitor,
+    failure: null,
+    discoveredUrl: LIVE_RESULTS_URL,
+    etag: null,
+    lastModified: null,
+    revisionKey: LIVE_REVISION_KEY,
+    settledRevisionKey: monitor.settledRevisionKey === LIVE_REVISION_KEY ? null : monitor.settledRevisionKey,
+    detectionLimited: true,
+    lastSourceCheckAt: nowIso,
+    lastSourceChangeAt: monitor.revisionKey === LIVE_REVISION_KEY ? monitor.lastSourceChangeAt : nowIso,
+    lastDispatchAt: nowIso,
+    dispatchStatus: dispatched ? "sent" : "failed",
+  });
+  return { dispatched };
 }
 
 async function dispatchRevision(

@@ -52,6 +52,31 @@ test("dispatches once per revision and retries after three minutes", async () =>
   assert.equal(dispatches, 3);
 });
 
+test("dispatches a live dashboard refresh every three minutes before SOVC appears", async () => {
+  const kv = memoryKv();
+  let dispatches = 0;
+  const noSovc = `<h3>General Election</h3><p>Download Unofficial Statement of Votes Cast</p><h3>Primary Election</h3>`;
+  const fetchImpl: typeof fetch = async (input, init) => {
+    const url = String(input);
+    if (url === page) return new Response(noSovc);
+    if (url === dispatchUrl) {
+      dispatches += 1;
+      const body = JSON.parse(String(init?.body)) as { client_payload: { observedUrl: string } };
+      assert.equal(body.client_payload.observedUrl, "https://electionresults.washoecounty.gov/");
+      return new Response(null, { status: 204 });
+    }
+    return new Response("missing", { status: 404 });
+  };
+  const env = { IVGID_RESULTS: kv, GITHUB_DISPATCH_TOKEN: "test-token" };
+  const start = Date.parse("2026-11-03T20:00:00.000Z");
+  await checkSource(env, fetchImpl, start);
+  assert.equal(dispatches, 1);
+  await checkSource(env, fetchImpl, start + 60_000);
+  assert.equal(dispatches, 1);
+  await checkSource(env, fetchImpl, start + 3 * 60_000);
+  assert.equal(dispatches, 2);
+});
+
 test("does not dispatch again after the revision is imported", async () => {
   const kv = memoryKv();
   const fetchImpl: typeof fetch = async (input) => {
